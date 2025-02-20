@@ -7,11 +7,15 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: '*',  // Allows requests from any origin
+        methods: ['GET', 'POST']
     }
 });
 
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST']
+}));
 app.use(express.json());
 
 let words = {};
@@ -35,14 +39,12 @@ io.on('connection', (socket) => {
     });
 });
 
+// Use process.env.PORT for Render hosting
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
 
-
 app.get('/', (req, res) => {
     res.send('Server is running! Try submitting words.');
 });
-
-
