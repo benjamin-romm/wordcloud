@@ -7,18 +7,24 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',  // Allows requests from any origin
+        origin: '*',  // Allow requests from any domain
         methods: ['GET', 'POST']
     }
 });
 
 app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: '*', // Allow all domains
+    methods: ['GET', 'POST', 'OPTIONS'], // Include OPTIONS for preflight requests
+    allowedHeaders: ['Content-Type']
 }));
+
 app.use(express.json());
 
 let words = {};
+
+app.options('/submit', (req, res) => {
+    res.sendStatus(200); // Handles preflight requests
+});
 
 app.post('/submit', (req, res) => {
     const { word } = req.body;
@@ -39,7 +45,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Use process.env.PORT for Render hosting
+// Use process.env.PORT to make Render work properly
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
     console.log(`Server running on port ${port}`);
