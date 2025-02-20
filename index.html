@@ -23,7 +23,7 @@
     </div>
     
     <script>
-        const socket = io('http://localhost:3000');
+        const socket = io('https://wordcloud-8fhl.onrender.com');
         const canvas = document.getElementById('wordcloud');
         canvas.width = window.innerWidth * 2;
         canvas.height = window.innerHeight * 2;
@@ -52,7 +52,7 @@
             const wordInput = document.getElementById('word-input');
             const word = wordInput.value.trim();
             if (word) {
-                fetch('http://localhost:3000/submit', {
+                fetch('https://your-backend.onrender.com/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ word })
