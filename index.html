@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Word Cloud</title>
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        canvas { width: 100%; height: 80vh; }
+        #word-form { margin-top: 20px; }
+        input, button { padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Live Word Cloud</h1>
+    <canvas id="wordcloud"></canvas>
+    
+    <div id="word-form">
+        <input type="text" id="word-input" placeholder="Enter a word" />
+        <button onclick="submitWord()">Submit</button>
+    </div>
+    
+    <script>
+        const socket = io('http://localhost:3000');
+        const canvas = document.getElementById('wordcloud');
+        canvas.width = window.innerWidth * 2;
+        canvas.height = window.innerHeight * 2;
+        canvas.style.width = "100%";
+        canvas.style.height = "80vh";
+
+        let words = {};
+
+        socket.on('newWord', (word) => {
+            words[word] = (words[word] || 0) + 5; // Start each word at size 5 instead of 1
+            generateWordCloud();
+        });
+
+        function generateWordCloud() {
+            WordCloud(canvas, { 
+                list: Object.entries(words), 
+                gridSize: 5,  // Higher density
+                weightFactor: function(size) { return size * 20; },  // Adjusted size scaling
+                color: 'random-dark',
+                rotateRatio: 0.5,
+                backgroundColor: '#ffffff'
+            });
+        }
+
+        function submitWord() {
+            const wordInput = document.getElementById('word-input');
+            const word = wordInput.value.trim();
+            if (word) {
+                fetch('http://localhost:3000/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word })
+                });
+                wordInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
