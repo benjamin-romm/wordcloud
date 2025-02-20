@@ -2,54 +2,67 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: '*',  // Allow requests from any domain
-        methods: ['GET', 'POST']
-    }
+    cors: { origin: '*' }
 });
 
-app.use(cors({
-    origin: '*', // Allow all domains
-    methods: ['GET', 'POST', 'OPTIONS'], // Include OPTIONS for preflight requests
-    allowedHeaders: ['Content-Type']
-}));
-
+app.use(cors());
 app.use(express.json());
 
-let words = {};
+const FILE_PATH = path.join(__dirname, 'words.json');
 
-app.options('/submit', (req, res) => {
-    res.sendStatus(200); // Handles preflight requests
-});
-
-app.post('/submit', (req, res) => {
-    const { word } = req.body;
-    if (word) {
-        words[word] = (words[word] || 0) + 1;
-        io.emit('newWord', word);
-        res.status(200).send({ message: 'Word added successfully' });
-    } else {
-        res.status(400).send({ error: 'Word is required' });
+// Function to load words from JSON file
+function loadWords() {
+    try {
+        if (fs.existsSync(FILE_PATH)) {
+            const data = fs.readFileSync(FILE_PATH, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (err) {
+        console.error('Error loading words:', err);
     }
-});
+    return {};
+}
 
+// Function to save words to JSON file
+function saveWords(words) {
+    try {
+        fs.writeFileSync(FILE_PATH, JSON.stringify(words, null, 2), 'utf8');
+    } catch (err) {
+        console.error('Error saving words:', err);
+    }
+}
+
+let words = loadWords(); // Load words when server starts
+
+// Send existing words when a user connects
 io.on('connection', (socket) => {
     console.log('A user connected');
     socket.emit('initialWords', words);
-    socket.on('disconnect', () => {
-        console.log('A user disconnected');
-    });
+    socket.on('disconnect', () => console.log('A user disconnected'));
 });
 
-// Use process.env.PORT to make Render work properly
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+// Handle word submissions
+app.post('/submit', (req, res) => {
+    const { word } = req.body;
+    if (!word) {
+        return res.status(400).send({ error: 'Word is required' });
+    }
+
+    words[word] = (words[word] || 0) + 5; // Increase word count
+    saveWords(words); // Save to JSON file
+
+    io.emit('newWord', word); // Update frontend
+    res.status(200).send({ message: 'Word added successfully' });
 });
+
+// Start server
+server.listen(1000, () => console.log('Server running on port 1000'));
 
 app.get('/', (req, res) => {
     res.send('Server is running! Try submitting words.');
