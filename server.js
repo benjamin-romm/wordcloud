@@ -67,3 +67,12 @@ server.listen(1000, () => console.log('Server running on port 1000'));
 app.get('/', (req, res) => {
     res.send('Server is running! Try submitting words.');
 });
+
+const mongoURI = process.env.MONGO_URI;
+
+mongoose.connect(mongoURI, { 
+    useNewUrlParser: true, 
+    useUnifiedTopology: true 
+})
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log("MongoDB Connection Error:", err));
